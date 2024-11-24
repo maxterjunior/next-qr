@@ -5,13 +5,13 @@ import Link from 'antd/es/typography/Link';
 import { message } from 'antd/lib';
 import QrScanner from "qr-scanner";
 import QrGenerator from "qrcode";
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import ZebraBrowserPrintWrapper from 'zebra-browser-print-wrapper';
 import { ColorQr, useColorsQrStore } from '../core/store/colorsQr';
+import { ConfigZebra, useConfigZebraStore } from '../core/store/configZebra';
 import { useSplitStore } from '../core/store/split';
 import { useThemeStore } from '../core/store/theme';
 import yape from '/yape-cristian.webp';
-import { ConfigZebra, useConfigZebraStore } from '../core/store/configZebra';
 
 const BASE_URL = import.meta.env.BASE_URL
 
@@ -189,7 +189,7 @@ export const Footer = () => {
         setModalConfig(null);
     }
 
-    const itemsPrinter = useMemo(() => [
+    const itemsPrinter = [
         {
             key: 'p1',
             label: 'Guardar como PDF',
@@ -236,7 +236,7 @@ export const Footer = () => {
                 },
             ]
         },
-    ], [useConfigZebra, formConfig])
+    ]
 
 
     const [modalColor, setModalColor] = useState<ColorQr | null>(null);
