@@ -351,7 +351,7 @@ export const Footer = () => {
                     <Form.Item name='label' label='Nombre' rules={[{ required: true }]}>
                         <Input />
                     </Form.Item>
-                    <Form.Item name='itemsLabel' label='Items por etiqueta' rules={[{ required: true }]}>
+                    <Form.Item name='itemsLabel' label='Qrs por fila' rules={[{ required: true }]}>
                         <InputNumber />
                     </Form.Item>
                     <Form.Item name='yAlign' label='Alineación vertical' rules={[{ required: true }]}>
