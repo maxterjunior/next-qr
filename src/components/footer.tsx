@@ -1,5 +1,5 @@
-import { BgColorsOutlined, CloseOutlined, DownloadOutlined, GithubOutlined, HeartTwoTone, InstagramOutlined, LinkedinOutlined, PlusOutlined, PrinterOutlined, QrcodeOutlined, RestOutlined } from '@ant-design/icons';
-import { Button, ColorPicker, Dropdown, Form, Image, Input, Modal, Switch, Tooltip } from "antd";
+import { BgColorsOutlined, CloseOutlined, DownloadOutlined, EditOutlined, GithubOutlined, HeartTwoTone, InstagramOutlined, LinkedinOutlined, PlusOutlined, PrinterOutlined, QrcodeOutlined, RestOutlined } from '@ant-design/icons';
+import { Button, ColorPicker, Dropdown, Form, Image, Input, InputNumber, Modal, Space, Switch, Tooltip } from "antd";
 import { ItemType } from 'antd/es/menu/interface';
 import Link from 'antd/es/typography/Link';
 import { message } from 'antd/lib';
@@ -11,6 +11,7 @@ import { ColorQr, useColorsQrStore } from '../core/store/colorsQr';
 import { useSplitStore } from '../core/store/split';
 import { useThemeStore } from '../core/store/theme';
 import yape from '/yape-cristian.webp';
+import { ConfigZebra, useConfigZebraStore } from '../core/store/configZebra';
 
 const BASE_URL = import.meta.env.BASE_URL
 
@@ -18,8 +19,6 @@ const BASE_URL = import.meta.env.BASE_URL
 const printPdf = async () => {
 
     const tabs = window.tabsStorage
-
-    console.log('tabs:', tabs)
 
     const codes = tabs.find((e) => e.selected as boolean)?.qrs || []
     const imgs = await Promise.all(codes.map(e => QrGenerator.toDataURL(e, { width: 200 })))
@@ -93,16 +92,9 @@ const readQr = () => {
     }
 }
 
-const printZebra = async (config = {
-    itemsLabel: 4,
-    yAlign: 3.6,
-    xAlignBase: 1,
-    xAlignFactor: 26.1,
-    fontSize: '0,2',
-    qrSize: 0.9
-}) => {
+const printZebra = async (config: ConfigZebra = { uuid: '0', label: 'default', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9 }) => {
+
     const qrs = window.tabsStorage.find((e) => e.selected as boolean)?.qrs || []
-    console.log(qrs);
 
     const arraySplit = (arr: string[], size: number) => arr.reduce((acc, e, i) => (i % size ? acc[acc.length - 1].push(e) : acc.push([e]), acc), [] as string[][]);
     const trimText = (length: number, text: string) => text.length > length ? text.substring(0, length) : text;
@@ -179,26 +171,64 @@ export const Footer = () => {
 
     const { isDark, toggleTheme } = useThemeStore()
     const [yapeVisible, setYapeVisible] = useState(false);
+    const useConfigZebra = useConfigZebraStore()
     const useColors = useColorsQrStore()
     const useSplit = useSplitStore()
 
+
+    const [modalConfig, setModalConfig] = useState<ConfigZebra | null>(null);
+    const [formConfig] = Form.useForm();
+    const onFinishConfig = (values) => {
+        if (modalConfig?.uuid) {
+            useConfigZebra.updateConfig({ uuid: modalConfig.uuid, ...values });
+            message.success('Configuración actualizada');
+        } else {
+            useConfigZebra.addConfig({ uuid: uuid(), ...values });
+            message.success('Configuración agregada');
+        }
+        setModalConfig(null);
+    }
+
     const itemsPrinter = useMemo(() => [
         {
-            key: '1',
+            key: 'p1',
             label: 'Guardar como PDF',
             onClick: () => printPdf()
         },
         {
-            key: '2',
+            key: 'p2',
             label: 'Zebra Browser Print',
             children: [
+                ...useConfigZebra.configs.map((config) => ({
+                    key: config.uuid,
+                    label: <div className="flex flex-row gap-10" onClick={() => printZebra(config)}>
+                        {config.label}
+                    </div>,
+                    extra: <Space>
+                        <Button name='edit-button' type='text' icon={<EditOutlined />}
+                            onClick={() => {
+                                formConfig.setFieldsValue(config)
+                                setModalConfig(config)
+                            }} />
+                        <Button name='delete-button' type='text' danger icon={<CloseOutlined />}
+                            onClick={() => {
+                                useConfigZebra.removeConfig(config);
+                                message.success('Configuración eliminada');
+                            }} />
+                    </Space>
+
+                })),
                 {
-                    key: '3-1',
-                    label: 'Imprimir 300dpi (4x1)',
-                    onClick: () => printZebra()
+                    key: 'p2-1',
+                    icon: <PlusOutlined />,
+                    label: 'Agregar configuración',
+                    onClick: () => {
+                        formConfig.setFieldsValue({ label: '', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9 })
+                        setModalConfig({ uuid: '', label: '', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9 })
+                    }
                 },
                 {
-                    key: '3-2',
+                    key: 'p2-2',
                     icon: <DownloadOutlined />,
                     label: (<Link href={BASE_URL + 'zebra-browser-print-windows.exe'} target='_blank' rel='noreferrer'>
                         Descargar Driver
@@ -206,7 +236,7 @@ export const Footer = () => {
                 },
             ]
         },
-    ], [])
+    ], [useConfigZebra, formConfig])
 
 
     const [modalColor, setModalColor] = useState<ColorQr | null>(null);
@@ -236,7 +266,6 @@ export const Footer = () => {
                 useColors.removeColor(color);
                 message.success('Color eliminado');
             }} />
-
     })),
     {
         key: 'add',
@@ -284,7 +313,12 @@ export const Footer = () => {
 
         <div className='flex-center-row gap-10 px-10 text-black'>
 
-            <Modal title="Agregar color" open={!!modalColor} onCancel={() => setModalColor(null)} onOk={() => { form.submit() }}>
+            <Modal
+                title={modalConfig ? 'Editar configuración' : 'Agregar configuración'}
+                open={!!modalColor}
+                onCancel={() => setModalColor(null)}
+                onOk={() => { form.submit() }}
+            >
                 <Form form={form} onFinish={onFinishColor} >
                     <Form.Item name='label' label='Nombre' rules={[{ required: true }]}>
                         <Input />
@@ -306,6 +340,37 @@ export const Footer = () => {
             <Tooltip title='Cambiar modo de separación'>
                 <Switch checkedChildren="\n" unCheckedChildren="/\s/" checked={useSplit.splitSpace} onChange={useSplit.toggleSplit} />
             </Tooltip>
+
+            <Modal
+                title={modalConfig?.uuid ? 'Editar configuración' : 'Agregar configuración'}
+                open={!!modalConfig}
+                onCancel={() => setModalConfig(null)}
+                onOk={() => { formConfig.submit() }}
+            >
+                <Form form={formConfig} onFinish={onFinishConfig} >
+                    <Form.Item name='label' label='Nombre' rules={[{ required: true }]}>
+                        <Input />
+                    </Form.Item>
+                    <Form.Item name='itemsLabel' label='Items por etiqueta' rules={[{ required: true }]}>
+                        <InputNumber />
+                    </Form.Item>
+                    <Form.Item name='yAlign' label='Alineación vertical' rules={[{ required: true }]}>
+                        <InputNumber />
+                    </Form.Item>
+                    <Form.Item name='xAlignBase' label='Alineación horizontal base' rules={[{ required: true }]}>
+                        <InputNumber />
+                    </Form.Item>
+                    <Form.Item name='xAlignFactor' label='Alineación horizontal factor' rules={[{ required: true }]}>
+                        <InputNumber />
+                    </Form.Item>
+                    <Form.Item name='fontSize' label='Tamaño de fuente' rules={[{ required: true }]}>
+                        <InputNumber />
+                    </Form.Item>
+                    <Form.Item name='qrSize' label='Tamaño de QR' rules={[{ required: true }]}>
+                        <InputNumber />
+                    </Form.Item>
+                </Form>
+            </Modal>
 
             <Dropdown menu={{ items: itemsPrinter }} >
                 <Button type='primary' icon={<PrinterOutlined />} onClick={() => printPdf()} size='large' />
