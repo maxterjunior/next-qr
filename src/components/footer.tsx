@@ -363,8 +363,8 @@ export const Footer = () => {
                     <Form.Item name='xAlignFactor' label='Alineación horizontal factor' rules={[{ required: true }]}>
                         <InputNumber />
                     </Form.Item>
-                    <Form.Item name='fontSize' label='Tamaño de fuente' rules={[{ required: true }]}>
-                        <InputNumber />
+                    <Form.Item name='fontSize' label='Tamaño de fuente' rules={[{ required: true }, { pattern: /^[0-9],(1[0-9]|24|[0-9])$/ }]}>
+                        <Input />
                     </Form.Item>
                     <Form.Item name='qrSize' label='Tamaño de QR' rules={[{ required: true }]}>
                         <InputNumber />
