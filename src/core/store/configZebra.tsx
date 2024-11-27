@@ -15,7 +15,8 @@ export interface ConfigZebra {
     xAlignBase: number
     xAlignFactor: number
     fontSize: string
-    qrSize: number
+    qrSize: number,
+    maxLength: number
 }
 
 const defaultValues: ConfigZebra[] = [
@@ -27,7 +28,8 @@ const defaultValues: ConfigZebra[] = [
         xAlignBase: 1,
         xAlignFactor: 26.1,
         fontSize: '0,2',
-        qrSize: 0.9
+        qrSize: 0.9,
+        maxLength: 23
     }
 ]
 

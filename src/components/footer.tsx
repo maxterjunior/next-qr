@@ -92,12 +92,21 @@ const readQr = () => {
     }
 }
 
-const printZebra = async (config: ConfigZebra = { uuid: '0', label: 'default', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9 }) => {
+const printZebra = async (config: ConfigZebra = { uuid: '0', label: 'default', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9, maxLength: 23 }) => {
 
     const qrs = window.tabsStorage.find((e) => e.selected as boolean)?.qrs || []
 
     const arraySplit = (arr: string[], size: number) => arr.reduce((acc, e, i) => (i % size ? acc[acc.length - 1].push(e) : acc.push([e]), acc), [] as string[][]);
     const trimText = (length: number, text: string) => text.length > length ? text.substring(0, length) : text;
+
+    const centerText = (length: number, text: string) => {
+        const diff = length - text.length;
+        const left = Math.floor(diff / 2);
+        const right = Math.ceil(diff / 2);
+        return ' '.repeat(left) + text + ' '.repeat(right);
+    }
+
+    const round = (num: number) => Math.round(num * 100) / 100;
 
     let commands = '';
 
@@ -109,23 +118,42 @@ const printZebra = async (config: ConfigZebra = { uuid: '0', label: 'default', i
         commands += `^XA
 ^MUM
 ^${index === filas.length - 1 ? 'MMC' : 'MMT'}
-^PW1000
+^PW1800
 ^LL1218
 ^LS0 
 `;
 
         for (const [index, qr] of fila.entries()) {
 
-            commands += `^FT${1.2 + config.xAlignBase + index * config.xAlignFactor},${config.yAlign + 21.7}
+            commands += `
+          ^FT${round(1.2 + config.xAlignBase + index * config.xAlignFactor)},${round(config.yAlign + 21.7)}
           ^BQN,2,${config.qrSize}
           ^FDLA,${qr}
           ^FS
-          
-          ^FT${config.xAlignBase + index * config.xAlignFactor},${config.yAlign + 21.8}
+
+          ^FT${round(config.xAlignBase + index * config.xAlignFactor)},${round(config.yAlign)}
           ^A0N,${config.fontSize}
           ^FH\
-          ^FD${trimText(23, qr)}
-          ^FS 
+          ^FD${centerText(config.maxLength, trimText(config.maxLength, qr))}
+          ^FS
+
+          ^FT${round(config.xAlignBase + index * config.xAlignFactor)},${round(config.yAlign + 21.8)}
+          ^A0N,${config.fontSize}
+          ^FH\
+          ^FD${trimText(config.maxLength, qr)}
+          ^FS
+
+          ^FT${round(.8 + config.xAlignBase + index * config.xAlignFactor)},${round(config.yAlign + 20)}
+          ^A0B,${config.fontSize}
+          ^FH\
+          ^FD${trimText(config.maxLength, qr)}
+          ^FS
+
+          ^FT${round(22.8 + config.xAlignBase + index * config.xAlignFactor)},${round(config.yAlign + 20)}
+          ^A0B,${config.fontSize}
+          ^FH\
+          ^FD${trimText(config.maxLength, qr)}
+          ^FS
 `;
 
         }
@@ -223,8 +251,8 @@ export const Footer = () => {
                     icon: <PlusOutlined />,
                     label: 'Agregar configuración',
                     onClick: () => {
-                        formConfig.setFieldsValue({ label: '', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9 })
-                        setModalConfig({ uuid: '', label: '', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9 })
+                        formConfig.setFieldsValue({ label: '', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9, maxLength: 23 })
+                        setModalConfig({ uuid: '', label: '', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9, maxLength: 23 })
                     }
                 },
                 {
@@ -344,8 +372,19 @@ export const Footer = () => {
             <Modal
                 title={modalConfig?.uuid ? 'Editar configuración' : 'Agregar configuración'}
                 open={!!modalConfig}
-                onCancel={() => setModalConfig(null)}
-                onOk={() => { formConfig.submit() }}
+                footer={[
+                    <Button key="print" type='dashed' onClick={() => {
+                        printZebra(formConfig.getFieldsValue() as ConfigZebra)
+                    }}>
+                        Imprimir
+                    </Button>,
+                    <Button key="back" onClick={() => setModalConfig(null)}>
+                        Cancelar
+                    </Button>,
+                    <Button key="submit" type="primary" onClick={() => formConfig.submit()}>
+                        Guardar
+                    </Button>,
+                ]}
             >
                 <Form form={formConfig} onFinish={onFinishConfig} >
                     <Form.Item name='label' label='Nombre' rules={[{ required: true }]}>
@@ -367,6 +406,9 @@ export const Footer = () => {
                         <Input />
                     </Form.Item>
                     <Form.Item name='qrSize' label='Tamaño de QR' rules={[{ required: true }]}>
+                        <InputNumber />
+                    </Form.Item>
+                    <Form.Item name='maxLength' label='Longitud máxima' rules={[{ required: true }]}>
                         <InputNumber />
                     </Form.Item>
                 </Form>
