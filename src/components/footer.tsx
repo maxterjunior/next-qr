@@ -408,6 +408,9 @@ export const Footer = () => {
                     <Form.Item name='qrSize' label='Tamaño de QR' rules={[{ required: true }]}>
                         <InputNumber />
                     </Form.Item>
+                    <Form.Item name='qrYAlign' label='Alineación vertical QR' rules={[{ required: true }]}>
+                        <InputNumber />
+                    </Form.Item>
                     <Form.Item name='maxLength' label='Longitud máxima' rules={[{ required: true }]}>
                         <InputNumber />
                     </Form.Item>
