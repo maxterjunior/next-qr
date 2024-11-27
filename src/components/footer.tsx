@@ -92,7 +92,7 @@ const readQr = () => {
     }
 }
 
-const printZebra = async (config: ConfigZebra = { uuid: '0', label: 'default', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9, maxLength: 23 }) => {
+const printZebra = async (config: ConfigZebra = { uuid: '0', label: 'default', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9, maxLength: 23, qrYAlign: 0 }) => {
 
     const qrs = window.tabsStorage.find((e) => e.selected as boolean)?.qrs || []
 
@@ -126,7 +126,7 @@ const printZebra = async (config: ConfigZebra = { uuid: '0', label: 'default', i
         for (const [index, qr] of fila.entries()) {
 
             commands += `
-          ^FT${round(1.2 + config.xAlignBase + index * config.xAlignFactor)},${round(config.yAlign + 21.7)}
+          ^FT${round(1.2 + config.xAlignBase + index * config.xAlignFactor)},${round(config.yAlign + 21.7 + config.qrYAlign)}
           ^BQN,2,${config.qrSize}
           ^FDLA,${qr}
           ^FS
@@ -251,8 +251,8 @@ export const Footer = () => {
                     icon: <PlusOutlined />,
                     label: 'Agregar configuración',
                     onClick: () => {
-                        formConfig.setFieldsValue({ label: '', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9, maxLength: 23 })
-                        setModalConfig({ uuid: '', label: '', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9, maxLength: 23 })
+                        formConfig.setFieldsValue({ label: '', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9, maxLength: 23, qrYAlign: 0 })
+                        setModalConfig({ uuid: '', label: '', itemsLabel: 4, yAlign: 3.6, xAlignBase: 1, xAlignFactor: 26.1, fontSize: '0,2', qrSize: 0.9, maxLength: 23, qrYAlign: 0 })
                     }
                 },
                 {

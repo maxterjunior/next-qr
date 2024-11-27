@@ -16,6 +16,7 @@ export interface ConfigZebra {
     xAlignFactor: number
     fontSize: string
     qrSize: number,
+    qrYAlign: number,
     maxLength: number
 }
 
@@ -29,6 +30,7 @@ const defaultValues: ConfigZebra[] = [
         xAlignFactor: 26.1,
         fontSize: '0,2',
         qrSize: 0.9,
+        qrYAlign: 0,
         maxLength: 23
     }
 ]
@@ -51,6 +53,7 @@ export const useConfigZebraStore = create(
         {
             name: 'configZebra-storage', // name of the item in the storage (must be unique)
             storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
+            version: 1, // (optional) by default, 0 is used
         },
     ),
 )
