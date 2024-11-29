@@ -79,7 +79,7 @@ export const QrsContainer = memo(({ text, keyTab }: { text: string, keyTab: stri
     }
 
     return <>
-        <div className="flex gap-20 flex-wrap justify-center">
+        <div className="flex gap-80 flex-wrap justify-center">
             {qrs.map((code, i) => <div key={i} className="flex flex-column gap-10 align-center">
                 <Dropdown
                     menu={{ items: generateItems(code) }}
@@ -89,6 +89,7 @@ export const QrsContainer = memo(({ text, keyTab }: { text: string, keyTab: stri
                         className="scale-hover cursor-pointer"
                         type="svg"
                         bgColor="#fff"
+                        size={200}
                         color={getColor(code)}
                         value={code}
                         onClick={() => focusQr(code)}
